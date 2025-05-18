@@ -2,9 +2,11 @@ package com.alkhatib.services;
 
 import java.util.List;
 
+
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -86,10 +88,40 @@ public class OrderService {
 
          return OrderMapper.toDto(updatedOrder);
     }
+    
+    public OrderDto updateOrderForUser(Long id, OrderDto orderDetailsDto, String username) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        // Ensure the logged-in user owns the order
+        if (!order.getUser().getUsername().equals(username)) {
+            throw new AccessDeniedException("You are not authorized to update this order.");
+        }
+
+        // Proceed with the update
+        order.setDescription(orderDetailsDto.getDescription());
+        // Add more fields if needed
+        Order updatedOrder = orderRepository.save(order);
+
+        return OrderMapper.toDto(updatedOrder);
+    }
 
     // Delete an order
     public void deleteOrder(Long id) {
         orderRepository.deleteById(id);
+    }
+    
+    public void deleteOrderForUser(Long orderId, String username) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (!order.getUser().getUsername().equals(username)) {
+            System.out.println("here throw!");
+        	throw new AccessDeniedException("You are not authorized to delete this order.");
+            
+        }
+
+        orderRepository.delete(order);
     }
     
     public OrderDto createOrderForUsername(String username, OrderDto orderRequest) {

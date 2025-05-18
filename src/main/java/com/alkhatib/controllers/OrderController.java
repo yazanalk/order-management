@@ -100,6 +100,22 @@ public class OrderController {
         System.out.println("the new one is now used");
         return ResponseEntity.ok(updatedOrder);
     }
+    
+    @PutMapping("/update/{orderId}")
+    public ResponseEntity<OrderDto> updateOrder(
+            @PathVariable Long orderId,
+            @RequestBody OrderDto orderDto,
+            Authentication authentication) {
+
+        String username = authentication.getName(); // Logged-in user's username
+
+        // Let the service check if this user owns the order
+        OrderDto updatedOrder = orderService.updateOrderForUser(orderId, orderDto, username);
+
+        System.out.println("Order update restricted to owner only");
+        return ResponseEntity.ok(updatedOrder);
+    }
+    
 
     // Delete an order
     @DeleteMapping("/{orderId}")
@@ -108,6 +124,19 @@ public class OrderController {
         
         System.out.println("the new one is now used");
         
+        return ResponseEntity.noContent().build();
+    }
+    
+    @DeleteMapping("delete/{orderId}")
+    public ResponseEntity<Void> deleteOrder(
+            @PathVariable Long orderId,
+            Authentication authentication) {
+
+        String username = authentication.getName();
+        orderService.deleteOrderForUser(orderId, username);
+
+        System.out.println("Order deleted by its owner");
+
         return ResponseEntity.noContent().build();
     }
 }
